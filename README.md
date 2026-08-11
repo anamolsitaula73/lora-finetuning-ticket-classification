@@ -93,13 +93,15 @@ Evaluated both runs on the same 3 held-out examples from `val.json` (never seen 
 
 ## 7. How to Run
 
-**Requirements:** the base model (`unsloth/Meta-Llama-3.1-8B-bnb-4bit`) is downloaded automatically from Hugging Face; you only need this repo's `lora_model_v2` adapter files locally, or hosted on Hugging Face Hub.
+The trained LoRA adapter is hosted on Hugging Face Hub: **[anamolsitaula/llama3-ticket-classifier-lora](https://huggingface.co/anamolsitaula/llama3-ticket-classifier-lora)**
+
+The base model (`unsloth/Meta-Llama-3.1-8B-bnb-4bit`) and the adapter above are both downloaded automatically from Hugging Face — no local model files needed.
 
 ```python
 from unsloth import FastLanguageModel
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "lora_model_v2",  # path to the saved adapter folder, or "your-username/lora_model_v2" if hosted on HF Hub
+    model_name = "anamolsitaula/llama3-ticket-classifier-lora",
     max_seq_length = 2048,
     load_in_4bit = True,
 )
