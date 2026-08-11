@@ -3,7 +3,7 @@
 
 ---
 
-## 1. Problem Statement
+## 1. Problem Statement 
 
 **Task:** Convert an unstructured customer support message into a structured JSON ticket with three fields: `category`, `urgency`, and `summary`.
 
