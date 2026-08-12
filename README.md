@@ -3,7 +3,7 @@
 
 ---
 
-## 1. Problem Statement 
+## 1. Problem Statement
 
 **Task:** Convert an unstructured customer support message into a structured JSON ticket with three fields: `category`, `urgency`, and `summary`.
 
@@ -51,6 +51,20 @@
 
 ## 4. Evaluation
 
+### 4.1 Base model vs fine-tuned model
+
+Before comparing the two fine-tuning runs against each other, the **untouched base model** (Llama 3.1 8B, no LoRA adapter at all) was tested on the same 3 held-out complaints, to confirm fine-tuning was actually necessary rather than assumed:
+
+| Test complaint | Base model output | Problem |
+|---|---|---|
+| "I'm unable to add new team members, the invite button just doesn't respond." | Echoed the input text back, then hallucinated fabricated new instruction/input/response blocks with entirely different complaints | No structure, no JSON, model just pattern-completed text rather than answering |
+| "I can't reset my password, the reset link in the email isn't working at all." | `{"category": "Authentication", "urgency": "High", "summary": "..."}` | Produced valid JSON, but invented its own category (`Authentication`, not one of the 6 trained categories) and inconsistent casing (`High` vs `high`) |
+| "Do you offer a student discount? Just curious before I renew." | Output as Python comments, not JSON: `# Category: Renewal`, `# Urgency: Low`, `# Summary: Student discount` | Wrong output format entirely (code comments instead of JSON), and invented a category (`Renewal`) not in the trained set |
+
+**Conclusion:** the base model does not reliably follow the required JSON schema or fixed category/urgency vocabulary at all — it either fails to respond correctly, hallucinates unrelated content, or invents its own labels outside the trained vocabulary. This confirms fine-tuning was necessary for this task, not just a comparison between fine-tuning configurations.
+
+### 4.2 Comparing two fine-tuning runs (60 steps vs 20 steps)
+
 Evaluated both runs on the same 3 held-out examples from `val.json` (never seen during training):
 
 | Test complaint | Expected | Run 1 output | Run 2 output |
@@ -60,11 +74,13 @@ Evaluated both runs on the same 3 held-out examples from `val.json` (never seen 
 | "Do you offer a student discount? Just curious before I renew." | billing / low | billing ✅ / low ✅ | billing ✅ / low ✅ |
 
 **Accuracy summary:**
-| Metric | Run 1 (60 steps) | Run 2 (20 steps) |
-|---|---|---|
-| Category accuracy | 1/3 | 2/3 |
-| Urgency accuracy | 2/3 | 3/3 |
-| Summary quality | Paraphrased, not verbatim, in both runs | Paraphrased, not verbatim, in both runs |
+| Metric | Base model | Run 1 (60 steps) | Run 2 (20 steps) |
+|---|---|---|---|
+| Follows JSON schema correctly | 1/3 (inconsistent) | 3/3 | 3/3 |
+| Uses only the 6 trained categories | 0/3 | 3/3 | 3/3 |
+| Category accuracy | N/A (no valid categories produced) | 1/3 | 2/3 |
+| Urgency accuracy | N/A | 2/3 | 3/3 |
+| Summary quality | N/A | Paraphrased, not verbatim, in both runs | Paraphrased, not verbatim, in both runs |
 
 ### Key findings
 
